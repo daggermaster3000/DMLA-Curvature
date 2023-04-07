@@ -1,4 +1,4 @@
-# Zebrafish Detection
+# DLMA workflow: Aiming fast toxicology screening using zebrafish based on Deep learning
 ## Abstract
 This AI project is a detection task for identifying `zebrafish organs` and `phenotypes` in micrographs, which is based on the Meta AI project, [Detectron2 version 0.4.1](https://github.com/facebookresearch/detectron2). It mainly used `Mask R-CNN` for training and validating. It has 16 detected objects, including 8 specific organs and 8 specific abnormal phenotypes. 
 
@@ -11,6 +11,11 @@ To use our zebrafish AI detection, you have to learn how to install and utilize 
 Firstly, install python3.8 or higher version, detectron2 (0.4.1) and other dependent libraries (see [zebrafish_maskrcnn.py](https://github.com/gonggqing/zebrafish_detection/blob/ddff5e1871fb63bbb34f46db6785534ed34c017a/zebrafish_maskrcnn.py)). Among all the libraries, [`fishutil`](https://github.com/gonggqing/zebrafish_detection/blob/b4dbee1b6be693c0968b62c1cd86daa5472d827d/fishutil.py) and [`fishclass`](https://github.com/gonggqing/zebrafish_detection/blob/b4dbee1b6be693c0968b62c1cd86daa5472d827d/fishclass.py) are two customized python libraries for transforming the model outputs to quantitative parameters of zebrafish.
 
 Then put the [pre-trained model weights](https://drive.google.com/file/d/1yyREJccnKeRDJ4BOnFMt3FNddC_w4fm_/view?usp=sharing) in your specified path.
+## Download the image library and pre-trained model weights
+mask r-cnn & resnet_r_101:
+tensormask & resnet_r_50:
+test_image:
+train_image:
 ```python
 # Modify some necessary paths
 # path to model weights
@@ -41,4 +46,4 @@ After the model inference, we can acquire a `csv file` which cotains the quantit
 ![results](https://user-images.githubusercontent.com/57084033/177250653-fbf07d17-8ba5-4be0-838c-360d66022691.png)
 
 ## Developer comments
-We will continually update this repository and add more images to our library, if you want to use this work, please cite our [research article]().
+We will continually update this repository and add more images to our library, if you want to use this work, please cite our [research article](https://pubs.acs.org/doi/10.1021/acs.est.3c00593).
