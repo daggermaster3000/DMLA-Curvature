@@ -1,5 +1,5 @@
 # DLMA: Deep Learning-Enabled Morphmetric Analysis
-## workflow: Aiming fast toxicology screening using zebrafish based on Deep learning
+## DLMA workflow: Aiming fast toxicology screening using zebrafish based on Deep learning (Use Detectron2 framework)
 ## Abstract
 This AI project is a detection task for identifying `zebrafish organs` and `phenotypes` in micrographs, which is based on the Meta AI project, [Detectron2 version 0.4.1](https://github.com/facebookresearch/detectron2). It mainly used `Mask R-CNN` for training and validating. It has 16 detected objects, including 8 specific organs and 8 specific abnormal phenotypes. 
 
