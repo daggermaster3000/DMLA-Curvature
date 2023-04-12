@@ -14,13 +14,9 @@ Firstly, install python3.8 or higher version, detectron2 (0.4.1) and other depen
 Then put the [pre-trained model weights](https://drive.google.com/file/d/1yyREJccnKeRDJ4BOnFMt3FNddC_w4fm_/view?usp=sharing) in your specified path.
 ## Download the image library and pre-trained model weights
 
-mask r-cnn & resnet_r_101:
+mask r-cnn & resnet_r_101/tensormask & resnet_r_50: download [here](https://drive.google.com/file/d/1md4kusa5aJFiCGDs43W0ECbOcrM8ka7p/view?usp=sharing)
 
-tensormask & resnet_r_50:
-
-test_image:
-
-train_image:
+test_image:/train_image: download here [test](https://drive.google.com/file/d/1md4kusa5aJFiCGDs43W0ECbOcrM8ka7p/view?usp=sharing) [train](https://drive.google.com/drive/folders/17j4MX7q8FlSerA01qsoTFl4Hl6ZUmDR8?usp=sharing)
 
 ```python
 # Modify some necessary paths
