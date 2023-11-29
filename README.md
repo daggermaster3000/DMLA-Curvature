@@ -55,3 +55,9 @@ After the model inference, we can acquire a `csv file` which cotains the quantit
 
 ## Developer comments
 We will continually update this repository and add more images to our library, if you want to use this work, please cite our [research article](https://pubs.acs.org/doi/10.1021/acs.est.3c00593).
+Citation infos:{
+  Deep Learning-Enabled Morphometric Analysis for Toxicity Screening Using Zebrafish Larvae
+  Gongqing Dong, Nan Wang, Ting Xu, Jingyu Liang, Ruxia Qiao, Daqiang Yin, and Sijie Lin
+  Environmental Science & Technology 2023 57 (46), 18127-18138
+  DOI: 10.1021/acs.est.3c00593
+}
