@@ -16,7 +16,8 @@ import math
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from skimage.morphology import skeletonize
+import utility.curvature_utils as cur_utils
 
 def mask_area(mask):
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -70,24 +71,73 @@ def zebrafish_info(zebrafish_instances):
 
         # compare the pred scores, if the score of the other existed category, replace the pos
         if info[category] == []:
-            info[category] = [area, bbdx, score]
+            info[category] = [area, bbdx, score, mask]
         else:
             if info[category][2] < score:
-                info[category] = [area, bbdx, score]
+                info[category] = [area, bbdx, score, mask]
             else:
                 pass
     return info
 
 
 def get_center(box):
+    #print(box)
     return [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2]
 
 
 def get_left(box):
+    # get the middle of the left side of the box
+    # XYXY_ABS format
+    #print(box)
     return [box[0], (box[1] + box[3]) / 2]
 
 
+def calculate_curvature(pred_mask):
+    """
+    Function to calculate the curvature of the spine returns the mean of the absolute curvature values
+    """
+
+    """ mask = pred_mask
+    skeleton = (skeletonize(mask,method="lee")* 255).astype(np.uint8)
+    cv2.imwrite("skeleton.png",(mask* 255).astype(np.uint8))
+    contour, _ = cv2.findContours(skeleton, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    contour = contour[0].reshape(-1, 2) 
+    # STOPPED HERE 8=============================================================D
+    #print(np.shape(contour))
+    dx_dt = np.gradient(contour[:,0])
+    dy_dt = np.gradient(contour[:,1])
+    #ds_dt = np.sqrt(dx_dt * dx_dt + dy_dt * dy_dt)
+    #d2s_dt2 = np.gradient(ds_dt)
+    d2x_dt2 = np.gradient(dx_dt)
+    d2y_dt2 = np.gradient(dy_dt)
+    #print((dx_dt * dx_dt + dy_dt * dy_dt)**1.5)
+    curvature = np.abs(d2x_dt2 * dy_dt - dx_dt * d2y_dt2) / (dx_dt * dx_dt + dy_dt * dy_dt)**1.5
+    max_curvature = max(curvature) """
+    
+    edge_pixels ,curvature = cur_utils.compute_curvature_profile(pred_mask,200,50)
+    plot = cur_utils.generate_plot_edges_with_curvature(pred_mask, edge_pixels[::10], np.abs(curvature[::10]))
+    curvature_area = np.trapz(np.abs(curvature[::10]),dx=10)
+    return curvature_area, plot
+
+def get_curve(info):
+    
+    cur = np.nan
+    plot = None
+
+    # calculate curvature
+    if info["bent spine"] != []:
+        cur, plot = calculate_curvature(info["bent spine"][3])
+    elif info["spine"] != []:
+        cur, plot = calculate_curvature(info["spine"][3])
+    
+    # calculate angle
+    angle = get_curve2(info)
+
+    return angle, cur, plot
+
+
 def get_right(box):
+    
     return [box[2], (box[1] + box[3]) / 2]
 
 
@@ -150,14 +200,16 @@ def get_tail_length(info):
     return round(tail, 3)
 
 
-def get_curve(info):
-    angle = 0
+def get_curve2(info):
+    """Get the angle of the body"""
+    angle = np.nan
     if info['eye'] != [] and info['spine'] != []:
         if info['tail'] != []:
             angle = get_angle(get_center(info['eye'][1]), get_center(info['spine'][1]), get_center(info['tail'][1]))
         else:
             angle = max(get_angle(get_center(info['eye'][1]), get_left(info['spine'][1]), get_right(info['spine'][1])),
                         get_angle(get_center(info['eye'][1]), get_right(info['spine'][1]), get_left(info['spine'][1])))
+            
     elif info['eye'] != [] and info['bent spine'] != []:
         if info['tail'] != []:
             angle = get_angle(get_center(info['eye'][1]), get_center(info['bent spine'][1]),
@@ -203,7 +255,8 @@ def update_template(zebrafish_cal, scale = 0.004):
     template['tail length'] = float('%.3g' % (zebrafish_cal.getail() * scale))
     template['spine length'] = float('%.3g' % (zebrafish_cal.getspine() * scale))
     template['body length'] = float('%.3g' % (zebrafish_cal.getlength() * scale))
-    template['body curvature'] = zebrafish_cal.getcurve()
+    template['body angle'] = zebrafish_cal.getcurve()[0]
+    template['body curvature'] = zebrafish_cal.getcurve()[1]
     template['head hemorrhage'] = zebrafish_cal.isheadamage()
     template['jaw malformation'] = zebrafish_cal.isjawmal()
     template['swim bladder absence'] = zebrafish_cal.isabsence()
@@ -212,6 +265,7 @@ def update_template(zebrafish_cal, scale = 0.004):
     template['bent spine'] = zebrafish_cal.isbent()
     template['dead'] = zebrafish_cal.isdead()
     template['unhatched'] = zebrafish_cal.isembryo()
+    
 
     return template
 
@@ -244,9 +298,9 @@ def plot(df):
     plt.ylabel('heart size / mm2', fontsize=10)
     plt.legend()
     plt.subplot(224)
-    plt.scatter(df['body length'], df['yolk size'], color='b', alpha=0.5, label='yolk')
+    plt.scatter(df['body length'], df['body curvature'], color='b', alpha=0.5, label='body curvature')
     plt.xlabel('body length / mm', fontsize=10)
-    plt.ylabel('yolk size / mm2', fontsize=10)
+    plt.ylabel(r'body curvature $k$', fontsize=10)
     plt.legend()
 
     plt.tight_layout()

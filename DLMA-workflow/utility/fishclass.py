@@ -1,9 +1,11 @@
-from fishutil import *
+from utility.fishutil import *
+import numpy as np
 
 class Zebrafish():
 
     def __init__(self, info):
         self.info = info
+        self.curvature_plot = None
 
     def islarva(self):
         return self.info['dead'] == [] and self.info['unhatched embryo'] == []
@@ -45,14 +47,15 @@ class Zebrafish():
         if self.islarva() and self.haseye():
             return get_body(self.info)
         else:
-            return 0
+            return np.nan
 
     def getcurve(self):
-        if self.islarva():
-            return get_curve(self.info)
+        if self.haspine():
+            angle, curvature, self.curvature_plot = get_curve(self.info)
+            return angle, curvature
         else:
-            return 0
-
+            return np.nan, np.nan
+        
     def gethead(self):
         if self.islarva():
             if self.info['head'] != []:
@@ -60,15 +63,15 @@ class Zebrafish():
             elif self.info['head hemorrhage'] != []:
                 return self.info['head hemorrhage'][0]
             else:
-                return 0
+                return np.nan
         else:
-            return 0
+            return np.nan
 
     def geteye(self):
         if self.haseye():
             return self.info['eye'][0]
         else:
-            return 0
+            return np.nan
 
     def getheart(self):
         if self.islarva():
@@ -77,9 +80,9 @@ class Zebrafish():
             elif self.info['pericardial edema'] != []:
                 return self.info['pericardial edema'][0]
             else:
-                return 0
+                return np.nan
         else:
-            return 0
+            return np.nan
 
     def getyolk(self):
         if self.islarva():
@@ -88,21 +91,21 @@ class Zebrafish():
             elif self.info['yolk edema'] != []:
                 return self.info['yolk edema'][0]
             else:
-                return 0
+                return np.nan
         else:
-            return 0
+            return np.nan
 
     def getail(self):
         if self.hastail():
             return get_tail_length(self.info)
         else:
-            return 0
+            return np.nan
 
     def getspine(self):
         if self.haspine():
             return get_spine_length(self.info)
         else:
-            return 0
+            return np.nan
 
     def getbladder(self):
         if self.islarva():
@@ -111,9 +114,9 @@ class Zebrafish():
             elif self.info['swim bladder absence'] != []:
                 return self.info['swim bladder absence'][0]
             else:
-                return 0
+                return np.nan
         else:
-            return 0
+            return np.nan
 
     def getjaw(self):
         if self.islarva():
@@ -122,6 +125,6 @@ class Zebrafish():
             elif self.info['jaw malformation'] != []:
                 return self.info['jaw malformation'][0]
             else:
-                return 0
+                return np.nan
         else:
-            return 0
+            return np.nan

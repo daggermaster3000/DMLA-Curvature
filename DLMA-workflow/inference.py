@@ -29,8 +29,8 @@ from detectron2.data.catalog import DatasetCatalog
 from detectron2.data import transforms as T
 
 # import custom library
-from fishutil import *
-from fishclass import Zebrafish
+from utility.fishutil import *
+from utility.fishclass import Zebrafish
 
 ##add some input
 parser = argparse.ArgumentParser()
@@ -49,10 +49,10 @@ image_type = args.image_type
 
 # train registry
 from detectron2.data.datasets import register_coco_instances
-register_coco_instances("zebrafish_train", {}, "~/Downloads/detectron2/zebrafish_archives/zebrafish_train.json",
-                        "~/Downloads/detectron2/zebrafish_archives/train_images")
-register_coco_instances("zebrafish_test", {}, "~/Downloads/detectron2/zebrafish_archives/zebrafish_test.json",
-                        "/~/Downloads/detectron2/zebrafish_archives/test_images")
+register_coco_instances("zebrafish_train", {}, "/Users/quillan/Documents/Lab/Thesis/Curvature_phenotyping/DLMA/DLMA-workflow/ckpt/zebrafish_train.json",
+                        "/Users/quillan/Documents/Lab/Thesis/Curvature_phenotyping/train_images")
+register_coco_instances("zebrafish_test", {}, "/Users/quillan/Documents/Lab/Thesis/Curvature_phenotyping/DLMA/DLMA-workflow/ckpt/zebrafish_test.json",
+                        "/Users/quillan/Documents/Lab/Thesis/Curvature_phenotyping/test_images")
 
 # visualize training data
 # my_data_train_metadata = MetadataCatalog.get("zebrafish_train")
@@ -67,7 +67,7 @@ register_coco_instances("zebrafish_test", {}, "~/Downloads/detectron2/zebrafish_
 #     cv2.imshow('new', vis.get_image()[:, :, ::-1])
 #     cv2.waitKey(0)
 
-torch.backends.cudnn.enable = True
+torch.backends.cudnn.enable = False
 torch.backends.cudnn.benchmark = True
 
 # set detectron2 training configs
@@ -83,9 +83,10 @@ cfg.DATASETS.TRAIN = ("zebrafish_train", )
 cfg.DATASETS.TEST = ("zebrafish_test", )
 
 # cfg.MODEL.DEVICE='cpu' # use cpu to train
-
+cfg.MODEL.DEVICE='cpu'
+print(cfg.MODEL.DEVICE)
 cfg.DATALOADER.NUM_WORKERS = 2
-cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml")
+cfg.MODEL.WEIGHTS = "/Users/quillan/Documents/Lab/Thesis/Curvature_phenotyping/ckpt/maskrcnn_r_101/model_final.pth"
 # RESUME FROM LAST CHECKPOINT
 # cfg.MODEL.WEIGHTS = "/home/gongching/Downloads/detectron2/toy_data/custom/OUTPUTS/model_final.pth"
 cfg.SOLVER.IMS_PER_BATCH = 2
@@ -139,7 +140,7 @@ trainer = CocoTrainer(cfg)
 # inference_on_dataset(trainer.model, val_loader, evaluator)
 #
 # # Inference
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+
 cfg.DATASETS.TEST = ("zebrafish_test", )
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
 predictor = DefaultPredictor(cfg)
@@ -170,30 +171,40 @@ for d in sorted(glob.glob("%s/*%s" %(input_path,image_type))):
     # # time.sleep(3)
     # cv2.waitKey(0)
     # cv2.destroyWindow("predict")
-
-
-    cv2.imwrite(os.path.join(output_path, 'fish_%s.png' % str(n)), out.get_image()[:, :, ::-1])
+    
+    fishname = os.path.split(d)[-1]
+    cv2.imwrite(os.path.join(output_path, fishname), out.get_image()[:, :, ::-1])
     n += 1
     instances = outputs['instances'].to('cpu')
 
     zebrafish_instances = split_outputs(instances)
 
     infos = zebrafish_info(zebrafish_instances) # returns a list, [mask_area, [bounding_box], score]
-    print(infos)
+    #print(infos)
 
     zebrafish = Zebrafish(infos)
+
+    
+
+
     print('------ Establish the zebrafish object succeed, waiting to append to data frame ------')
 
     zebrafish_endpoints = update_template(zebrafish)
 
-    print("------ Creating the dataframe of zebrafish endpoints ------")
-    df = df.append(zebrafish_endpoints, ignore_index=True)
+    # save the curvature plot
+    if zebrafish.curvature_plot != None:
+        os.makedirs(os.path.join(output_path,"curvature_plots"), exist_ok=True)
+        zebrafish.curvature_plot.savefig(os.path.join(output_path,"curvature_plots",f'{fishname.rstrip(".png")}_curve.png'))
 
+    print("------ Creating the dataframe of zebrafish endpoints ------")
+    zebrafish_endpoints["fish id"] = fishname
+    
+    df = df._append(zebrafish_endpoints, ignore_index=True)
     tb = texttable.Texttable()
-    tb.set_cols_align(['c' for i in range(18)])
+    tb.set_cols_align(['c' for i in range(20)])
     tb.header(df.columns)
     tb.add_rows(df.values, header=False)
-    tb.set_cols_width([5,5,5,5,5,8,8,8,8,10,10,12,10,11,5,5,5,9])
+    tb.set_cols_width([5,5,5,5,5,8,8,8,8,10,10,12,10,11,5,5,5,9,11,11])
     print(tb.draw())
     # visualize masks
     # for category in zebrafish_instances:
@@ -204,9 +215,9 @@ for d in sorted(glob.glob("%s/*%s" %(input_path,image_type))):
     # cv2.destroyAllWindows()
 
     # output to file
-    json_infos = json.dumps(infos, indent=4)
-    with open("%s/%s" %(output_path, file_json), 'a+') as f:
-        f.write(json_infos+'\n')
+    #json_infos = json.dumps(infos, indent=4)
+    #with open("%s/%s" %(output_path, file_json), 'a+') as f:
+    #    f.write(json_infos+'\n')
 
 df.to_csv(os.path.join(output_path, file_csv))
 
